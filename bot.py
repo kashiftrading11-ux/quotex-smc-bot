@@ -1,6 +1,6 @@
 # ============================================
-# 🤖 QUOTEX SMC SMART BRAIN BOT (24/7 CLOUD READY)
-# Strategy: SMC (Order Block + FVG + BOS)
+# 🤖 QUOTEX SMC SMART BRAIN BOT (MUKAMMAL CODE)
+# Strategy: SMC (Order Block + FVG + BOS + Sweeps)
 # Timeframe: 5 Min | Timing: Exact T-15 Seconds
 # ============================================
 
@@ -8,8 +8,8 @@ import os
 import logging
 import asyncio
 import threading
-from flask import Flask
 from datetime import datetime
+import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -19,19 +19,15 @@ from telegram.ext import (
     CallbackQueryHandler, ContextTypes
 )
 
-# ================= CLOUD SERVER (RENDER) =================
-app_web = Flask('')
-
-@app_web.route('/')
-def home():
-    return "🤖 Quotex SMC Bot Status: 24/7 ONLINE & ACTIVE!"
-
-def run_web():
-    port = int(os.environ.get("PORT", 8080))
-    app_web.run(host='0.0.0.0', port=port)
+# ================= STREAMLIT UI PAGE =================
+st.set_page_config(page_title="Quotex SMC Bot", page_icon="🤖")
+st.title("🤖 Quotex SMC Smart Brain Bot")
+st.markdown("---")
+st.success("🟢 Status: Bot is Running 24/7 on Cloud!")
+st.info("💡 Aapka Telegram Bot active hai. Laptop band kar dein, signals Telegram par aate rahenge.")
 
 # ================= CONFIGURATION =================
-# ⚠️ APNA TELEGRAM BOT TOKEN YAHAN DAL EIN (Quotes ke andar)
+# ⚠️ APNA TELEGRAM BOT TOKEN YAHAN DALEIN (Quotes ke andar)
 BOT_TOKEN = "9256890403:AAGXm_3iv6rJWBncE4enQye9AZ8-MyIa1UI"
 
 PAIRS = {
@@ -393,24 +389,24 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-# ================= MAIN FUNCTION =================
-def main():
-    # 1. Start Cloud Keep-Alive Dummy Web Server
-    threading.Thread(target=run_web, daemon=True).start()
-
-    print("🤖 SMC Smart Brain Bot Starting...")
-    print("🌐 Cloud Server Binding to Port...")
-    print("📊 Strategy: SMC (OB + FVG + BOS)")
-    print("⏱ Timeframe: 5 Minutes")
-    print("⏰ Signal Timing: 15 sec Before Candle Expiry")
-    print("=" * 50)
-
+# ================= BACKGROUND BOT RUNNER =================
+def run_telegram_bot_background():
+    """Bot ko Streamlit ke background thread mein chalata hai"""
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
+    
+    print("🤖 Telegram Bot Thread Active on Streamlit Cloud!")
+    
+    # ⚠️ CRITICAL CLOUD FIX: stop_signals=False (Streamlit error khatam karta hai)
+    app.run_polling(drop_pending_updates=True, stop_signals=False)
 
-    print("✅ Bot is RUNNING 24/7!")
-    app.run_polling(drop_pending_updates=True)
-
-if __name__ == "__main__":
-    main()
+# Streamlit Session State check to prevent multiple thread spawns
+if "telegram_bot_thread" not in st.session_state:
+    bot_thread = threading.Thread(target=run_telegram_bot_background, daemon=True)
+    bot_thread.start()
+    st.session_state.telegram_bot_thread = bot_thread
+    st.success("✅ Telegram Bot polling loop started successfully!")
