@@ -1,0 +1,7 @@
+python-telegram-bot
+yfinance
+ta
+pandas
+numpy
+flask
+gunicorn
